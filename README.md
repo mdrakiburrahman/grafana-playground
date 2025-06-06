@@ -49,7 +49,8 @@ Messing around with Grafana.
 > The tool `npx @grafana/create-plugin@latest` has been run once, and it pulls from [here](https://github.com/grafana/grafanacon-custom-data-source-plugin-example).
 
 * `cd ./rakirahman-helloworld-datasource`
+* `source ~/.bashrc`
 * `npm install` to install frontend dependencies.
 * `mage -v build:backend` to build the plugin backend code. Rerun this command every time you edit your backend files.
-* `npm run server` to start a grafana development server.
+* `npm run server` to start a grafana development server with docker compose.
 * Open `http://localhost:3000` in your browser to create a dashboard to begin developing your plugin.
