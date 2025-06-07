@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"math"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -65,39 +65,43 @@ type queryModel struct{}
 func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var response backend.DataResponse
 
-	// Unmarshal the JSON into our queryModel.
 	var qm queryModel
-
-	err := json.Unmarshal(query.JSON, &qm)
-	if err != nil {
+	if err := json.Unmarshal(query.JSON, &qm); err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
 	}
 
-	// create data frame response.
-	// For an overview on data frames and how grafana handles them:
-	// https://grafana.com/developers/plugin-tools/introduction/data-frames
 	frame := data.NewFrame("response")
 
-	// add fields.
-	duration := query.TimeRange.To.Sub(query.TimeRange.From)
-	mid := query.TimeRange.From.Add(duration / 2)
+	from := query.TimeRange.From
+	to := query.TimeRange.To
+	duration := to.Sub(from)
 
-	s := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(s)
+	// Define the number of points and sine wave parameters
+	numPoints := 100
+	frequency := 1.0                         // 1 cycle per duration
+	amplitude := 10.0                        // peak value
+	period := duration.Seconds() / frequency // total time for one sine wave cycle
 
-	lowVal := 10.0
-	highVal := 20.0
-	midVal := lowVal + (r.Float64() * (highVal - lowVal))
+	times := make([]time.Time, numPoints)
+	values := make([]float64, numPoints)
 
-	// add fields.
+	for i := 0; i < numPoints; i++ {
+		// Evenly space the time stamps
+		t := from.Add(time.Duration(float64(i) * duration.Seconds() / float64(numPoints) * float64(time.Second)))
+		// Compute the sine value
+		secondsSinceStart := t.Sub(from).Seconds()
+		value := amplitude * math.Sin(2.0*math.Pi*secondsSinceStart/period)
+
+		times[i] = t
+		values[i] = value
+	}
+
 	frame.Fields = append(frame.Fields,
-		data.NewField("time", nil, []time.Time{query.TimeRange.From, mid, query.TimeRange.To}),
-		data.NewField("values", nil, []float64{lowVal, midVal, highVal}),
+		data.NewField("time", nil, times),
+		data.NewField("value", nil, values),
 	)
 
-	// add the frames to the response.
 	response.Frames = append(response.Frames, frame)
-
 	return response
 }
 

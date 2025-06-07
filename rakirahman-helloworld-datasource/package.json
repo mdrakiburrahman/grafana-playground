@@ -11,6 +11,7 @@
     "lint:fix": "npm run lint -- --fix && prettier --write --list-different .",
     "e2e": "playwright test",
     "server": "docker compose up --build -d",
+    "shutdown": "docker compose down",
     "sign": "npx --yes @grafana/sign-plugin@latest"
   },
   "author": "Rakirahman",

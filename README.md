@@ -55,6 +55,7 @@ Messing around with Grafana.
 * `mage -v build:linux` to build the plugin backend code. Rerun this command every time you edit your backend files.
 * `npm run server` to start a grafana development server with docker compose.
 * Open `http://localhost:3000` in your browser to create a dashboard to begin developing your plugin.
+* `npm run shutdown` to stop a grafana development server with docker compose.
 
 Following [this tutorial](https://grafana.com/developers/plugin-tools/tutorials/build-a-data-source-backend-plugin#create-a-new-plugin), we can create a dummy line chart off our dataset, at [link](http://localhost:3000/d/beo8vdx2jwv0ga/hello-world-dashboard?orgId=1&from=now%2Ffy&to=now%2Ffy&timezone=browser&editPanel=1)
 
