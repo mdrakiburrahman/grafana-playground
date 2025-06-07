@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -78,9 +79,20 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 	frame := data.NewFrame("response")
 
 	// add fields.
+	duration := query.TimeRange.To.Sub(query.TimeRange.From)
+	mid := query.TimeRange.From.Add(duration / 2)
+
+	s := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(s)
+
+	lowVal := 10.0
+	highVal := 20.0
+	midVal := lowVal + (r.Float64() * (highVal - lowVal))
+
+	// add fields.
 	frame.Fields = append(frame.Fields,
-		data.NewField("time", nil, []time.Time{query.TimeRange.From, query.TimeRange.To}),
-		data.NewField("values", nil, []int64{10, 20}),
+		data.NewField("time", nil, []time.Time{query.TimeRange.From, mid, query.TimeRange.To}),
+		data.NewField("values", nil, []float64{lowVal, midVal, highVal}),
 	)
 
 	// add the frames to the response.
