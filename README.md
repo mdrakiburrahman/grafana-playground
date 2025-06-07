@@ -44,7 +44,7 @@ Messing around with Grafana.
    chmod +x ${GIT_ROOT}/.scripts/bootstrap-dev-env.sh && ${GIT_ROOT}/.scripts/bootstrap-dev-env.sh
    ```
 
-## Building and running the plugin
+## Building and running the demo plugin
 
 > The tool `npx @grafana/create-plugin@latest` has been run once, and it pulls from [here](https://github.com/grafana/grafana-plugin-examples/tree/main/examples/datasource-basic).
 
@@ -60,3 +60,7 @@ Messing around with Grafana.
 Following [this tutorial](https://grafana.com/developers/plugin-tools/tutorials/build-a-data-source-backend-plugin#create-a-new-plugin), we can create a dummy line chart off our dataset, at [link](http://localhost:3000/d/beo8vdx2jwv0ga/hello-world-dashboard?orgId=1&from=now%2Ffy&to=now%2Ffy&timezone=browser&editPanel=1)
 
 ![Line graph](.imgs/hello-world-dashboard.png)
+
+## Azure Data Explorer
+
+> Note that in order to install plugins, you need to sign into Grafana (`admin:admin`).
