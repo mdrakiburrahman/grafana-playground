@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/rand"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -62,35 +63,38 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 
 type queryModel struct{}
 
-func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, uQuery backend.DataQuery) backend.DataResponse {
 	var response backend.DataResponse
 
 	var qm queryModel
-	if err := json.Unmarshal(query.JSON, &qm); err != nil {
+	if err := json.Unmarshal(uQuery.JSON, &qm); err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
 	}
 
 	frame := data.NewFrame("response")
 
-	from := query.TimeRange.From
-	to := query.TimeRange.To
+	from := uQuery.TimeRange.From
+	to := uQuery.TimeRange.To
 	duration := to.Sub(from)
 
-	// Define the number of points and sine wave parameters
-	numPoints := 100
-	frequency := 1.0                         // 1 cycle per duration
-	amplitude := 10.0                        // peak value
-	period := duration.Seconds() / frequency // total time for one sine wave cycle
+	// Random seed
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Randomized parameters
+	numPoints := r.Intn(51) + 50        // 50–100 points
+	amplitude := 5.0 + r.Float64()*15.0 // 5–20
+	frequency := 0.1 + r.Float64()*1.9  // 0.1–2 cycles
 
 	times := make([]time.Time, numPoints)
 	values := make([]float64, numPoints)
 
 	for i := 0; i < numPoints; i++ {
-		// Evenly space the time stamps
-		t := from.Add(time.Duration(float64(i) * duration.Seconds() / float64(numPoints) * float64(time.Second)))
-		// Compute the sine value
-		secondsSinceStart := t.Sub(from).Seconds()
-		value := amplitude * math.Sin(2.0*math.Pi*secondsSinceStart/period)
+		// Linearly distributed timestamps
+		offset := float64(i) / float64(numPoints-1) * duration.Seconds()
+		t := from.Add(time.Duration(offset * float64(time.Second)))
+
+		// Sine wave value
+		value := amplitude * math.Sin(2.0*math.Pi*frequency*offset/duration.Seconds())
 
 		times[i] = t
 		values[i] = value
