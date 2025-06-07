@@ -56,6 +56,6 @@ Messing around with Grafana.
 * `npm run server` to start a grafana development server with docker compose.
 * Open `http://localhost:3000` in your browser to create a dashboard to begin developing your plugin.
 
-Following [this tutorial](https://grafana.com/developers/plugin-tools/tutorials/build-a-data-source-backend-plugin#create-a-new-plugin), we can create a dummy line chart off our dataset:
+Following [this tutorial](https://grafana.com/developers/plugin-tools/tutorials/build-a-data-source-backend-plugin#create-a-new-plugin), we can create a dummy line chart off our dataset, at [link](http://localhost:3000/d/beo8vdx2jwv0ga/hello-world-dashboard?orgId=1&from=now%2Ffy&to=now%2Ffy&timezone=browser&editPanel=1)
 
 ![Line graph](.imgs/hello-world-dashboard.png)
