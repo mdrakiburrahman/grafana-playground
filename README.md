@@ -51,6 +51,7 @@ Messing around with Grafana.
 * `cd ./rakirahman-helloworld-datasource`
 * `source ~/.bashrc`
 * `npm install` to install frontend dependencies.
-* `mage -v build:backend` to build the plugin backend code. Rerun this command every time you edit your backend files.
+* `npm run dev` to build the plugin frontend.
+* `mage -v build:linux` to build the plugin backend code. Rerun this command every time you edit your backend files.
 * `npm run server` to start a grafana development server with docker compose.
 * Open `http://localhost:3000` in your browser to create a dashboard to begin developing your plugin.
