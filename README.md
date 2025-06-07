@@ -46,7 +46,7 @@ Messing around with Grafana.
 
 ## Building and running the plugin
 
-> The tool `npx @grafana/create-plugin@latest` has been run once, and it pulls from [here](https://github.com/grafana/grafanacon-custom-data-source-plugin-example).
+> The tool `npx @grafana/create-plugin@latest` has been run once, and it pulls from [here](https://github.com/grafana/grafana-plugin-examples/tree/main/examples/datasource-basic).
 
 * `cd ./rakirahman-helloworld-datasource`
 * `source ~/.bashrc`
