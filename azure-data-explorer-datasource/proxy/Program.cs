@@ -15,43 +15,54 @@ if (string.IsNullOrWhiteSpace(endpointToQuery))
 
 app.MapGet("/healthz", () => Results.Text("Healthy", "text/plain"));
 
-app.MapPost("/v1/rest/mgmt", async context =>
-{
-    var routePath = context.Request.Path + context.Request.QueryString;
-    var appId = await RequireAppIdAsync(context, logger);
-    if (appId == null) return;
+app.MapPost(
+    "/v1/rest/mgmt",
+    async context =>
+    {
+        var routePath = context.Request.Path + context.Request.QueryString;
+        var appId = await RequireAppIdAsync(context, logger);
+        if (appId == null)
+            return;
 
-    using var reader = new StreamReader(context.Request.Body);
-    var requestBody = await reader.ReadToEndAsync();
-    await ProxyRequestAsync(requestBody, context, endpointToQuery, routePath, logger);
-});
+        using var reader = new StreamReader(context.Request.Body);
+        var requestBody = await reader.ReadToEndAsync();
+        await ProxyRequestAsync(requestBody, context, endpointToQuery, routePath, logger);
+    }
+);
 
-app.MapPost("/v1/rest/query", async context =>
-{
-    var routePath = context.Request.Path + context.Request.QueryString;
-    var appId = await RequireAppIdAsync(context, logger);
-    if (appId == null) return;
+app.MapPost(
+    "/v1/rest/query",
+    async context =>
+    {
+        var routePath = context.Request.Path + context.Request.QueryString;
+        var appId = await RequireAppIdAsync(context, logger);
+        if (appId == null)
+            return;
 
-    using var reader = new StreamReader(context.Request.Body);
-    var requestBody = await reader.ReadToEndAsync();
-    var requestPayload = ParseQueryPayload(requestBody, logger);
-    logger.LogInformation("Original Kusto Query: {Query}", requestPayload?.CSL);
+        using var reader = new StreamReader(context.Request.Body);
+        var requestBody = await reader.ReadToEndAsync();
+        var requestPayload = ParseQueryPayload(requestBody, logger);
+        logger.LogInformation("Original Kusto Query: {Query}", requestPayload?.CSL);
 
-    requestPayload.CSL = $@"
+        if (!new[] { ".show databases", ".show databases schema" }.Contains(requestPayload?.CSL))
+        {
+            requestPayload.CSL =
+                $@"
 let wages = view () {{ (wages) | where appid == ""{appId}"" }};
 restrict access to (wages);
-{requestPayload?.CSL}
-";
+{requestPayload.CSL}";
+        }
 
-    var rewrittenRequestBody = JsonSerializer.Serialize(
-        requestPayload,
-        AppJsonContext.Default.RequestPayload
-    );
+        var rewrittenRequestBody = JsonSerializer.Serialize(
+            requestPayload,
+            AppJsonContext.Default.RequestPayload
+        );
 
-    logger.LogInformation("Rewritten Kusto Query: {Query}", requestPayload?.CSL);
+        logger.LogInformation("Rewritten Kusto Query: {Query}", requestPayload?.CSL);
 
-    await ProxyRequestAsync(rewrittenRequestBody, context, endpointToQuery, routePath, logger);
-});
+        await ProxyRequestAsync(rewrittenRequestBody, context, endpointToQuery, routePath, logger);
+    }
+);
 
 app.Run();
 
@@ -97,7 +108,8 @@ async Task ProxyRequestAsync(
     HttpContext context,
     string endpointToQuery,
     string routePath,
-    ILogger logger)
+    ILogger logger
+)
 {
     var content = new StringContent(requestBody, System.Text.Encoding.UTF8, "application/json");
 
