@@ -35,9 +35,22 @@ app.MapPost("/v1/rest/query", async context =>
     using var reader = new StreamReader(context.Request.Body);
     var requestBody = await reader.ReadToEndAsync();
     var requestPayload = ParseQueryPayload(requestBody, logger);
-    logger.LogInformation("Kusto Query: {Query}", requestPayload?.CSL);
+    logger.LogInformation("Original Kusto Query: {Query}", requestPayload?.CSL);
 
-    await ProxyRequestAsync(requestBody, context, endpointToQuery, routePath, logger);
+    requestPayload.CSL = $@"
+let wages = view () {{ (wages) | where appid == ""{appId}"" }};
+restrict access to (wages);
+{requestPayload?.CSL}
+";
+
+    var rewrittenRequestBody = JsonSerializer.Serialize(
+        requestPayload,
+        AppJsonContext.Default.RequestPayload
+    );
+
+    logger.LogInformation("Rewritten Kusto Query: {Query}", requestPayload?.CSL);
+
+    await ProxyRequestAsync(rewrittenRequestBody, context, endpointToQuery, routePath, logger);
 });
 
 app.Run();
