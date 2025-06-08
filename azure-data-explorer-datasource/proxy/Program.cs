@@ -12,7 +12,7 @@ if (string.IsNullOrWhiteSpace(endpointToQuery))
 app.MapGet("/healthz", () => Results.Text("Healthy", "text/plain"));
 
 app.MapPost(
-    "/v1/rest/query",
+    "/{**catchall}",
     async context =>
     {
         using var httpClient = new HttpClient();
@@ -52,7 +52,9 @@ app.MapPost(
         var requestBody = await reader.ReadToEndAsync();
         var content = new StringContent(requestBody, System.Text.Encoding.UTF8, "application/json");
 
-        var response = await httpClient.PostAsync($"{endpointToQuery}/v1/rest/query", content);
+        var routePath = context.Request.Path + context.Request.QueryString;
+        var targetUrl = $"{endpointToQuery}{routePath}";
+        var response = await httpClient.PostAsync(targetUrl, content);
 
         context.Response.StatusCode = (int)response.StatusCode;
 

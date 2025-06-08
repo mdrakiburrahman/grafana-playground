@@ -75,6 +75,12 @@ Following [this tutorial](https://grafana.com/developers/plugin-tools/tutorials/
 * Open `http://localhost:3000` in your browser to create a dashboard to begin developing your plugin.
 * `npm run shutdown` to stop a grafana development server with docker compose.
 
-Configuring the SPN creds:
+Configuring the SPN creds against `http://azure-data-explorer-proxy`:
+
+![Proxy response](.imgs/adx-proxy-response.png)
+
+![Proxy setup success](.imgs/adx-proxy-setup.png)
+
+Creating a simple dashboard:
 
 ![Line graph](.imgs/adx-dashboard.png)
