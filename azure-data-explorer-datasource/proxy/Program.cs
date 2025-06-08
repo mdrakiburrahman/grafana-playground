@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 var logger = app.Logger;
@@ -11,98 +13,136 @@ if (string.IsNullOrWhiteSpace(endpointToQuery))
 
 app.MapGet("/healthz", () => Results.Text("Healthy", "text/plain"));
 
-app.MapPost(
-    "/{**catchall}",
-    async context =>
+app.MapPost("/v1/rest/mgmt", async context =>
+{
+    var routePath = context.Request.Path + context.Request.QueryString;
+    var appId = await RequireAppIdAsync(context, logger);
+    if (appId == null) return;
+
+    using var reader = new StreamReader(context.Request.Body);
+    var requestBody = await reader.ReadToEndAsync();
+    await ProxyRequestAsync(requestBody, context, endpointToQuery, routePath, logger);
+});
+
+app.MapPost("/v1/rest/query", async context =>
+{
+    var routePath = context.Request.Path + context.Request.QueryString;
+    var appId = await RequireAppIdAsync(context, logger);
+    if (appId == null) return;
+
+    using var reader = new StreamReader(context.Request.Body);
+    var requestBody = await reader.ReadToEndAsync();
+    await ProxyRequestAsync(requestBody, context, endpointToQuery, routePath, logger);
+});
+
+app.Run();
+
+string? GetClaim(IHeaderDictionary headers, string claim, ILogger logger)
+{
+    var authHeader = headers["Authorization"].FirstOrDefault();
+    if (
+        !string.IsNullOrWhiteSpace(authHeader)
+        && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+    )
     {
-        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-        if (authHeader != null && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        var token = authHeader.Substring("Bearer ".Length).Trim();
+        var handler = new JwtSecurityTokenHandler();
+
+        if (handler.CanReadToken(token))
         {
-            var token = authHeader.Substring("Bearer ".Length).Trim();
-
-            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-            if (handler.CanReadToken(token))
+            var jwtToken = handler.ReadJwtToken(token);
+            var jwtClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == claim);
+            if (jwtClaim != null)
             {
-                var jwtToken = handler.ReadJwtToken(token);
-                var appIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "appid");
-
-                if (appIdClaim != null)
-                {
-                    logger.LogInformation("AppId: {AppId}", appIdClaim.Value);
-                }
-                else
-                {
-                    logger.LogWarning("appid claim not found in the token.");
-                }
+                return jwtClaim.Value;
             }
             else
             {
-                logger.LogWarning("Unable to read JWT token.");
+                logger.LogWarning("{claim} claim not found in the token.", claim);
             }
         }
         else
         {
-            logger.LogWarning("Authorization header missing or not a Bearer token.");
+            logger.LogWarning("Unable to read JWT token.");
         }
-
-        using var httpClient = new HttpClient();
-
-        var restrictedHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "Content-Type",
-            "Content-Length",
-            "Content-Encoding",
-            "Transfer-Encoding",
-            "Host",
-        };
-
-        foreach (var header in context.Request.Headers)
-        {
-            if (restrictedHeaders.Contains(header.Key))
-                continue;
-
-            try
-            {
-                httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                    header.Key,
-                    header.Value.ToArray()
-                );
-            }
-            catch
-            {
-                logger.LogError(
-                    "Failed to add header {HeaderKey} with value {HeaderValue} to HttpClient.",
-                    header.Key,
-                    string.Join(", ", header.Value)
-                );
-            }
-        }
-
-        using var reader = new StreamReader(context.Request.Body);
-        var requestBody = await reader.ReadToEndAsync();
-        var content = new StringContent(requestBody, System.Text.Encoding.UTF8, "application/json");
-
-        var routePath = context.Request.Path + context.Request.QueryString;
-        var targetUrl = $"{endpointToQuery}{routePath}";
-        var response = await httpClient.PostAsync(targetUrl, content);
-
-        context.Response.StatusCode = (int)response.StatusCode;
-
-        foreach (var header in response.Headers)
-        {
-            context.Response.Headers[header.Key] = header.Value.ToArray();
-        }
-
-        foreach (var header in response.Content.Headers)
-        {
-            context.Response.Headers[header.Key] = header.Value.ToArray();
-        }
-
-        context.Response.Headers.Remove("transfer-encoding");
-
-        var responseStream = await response.Content.ReadAsStreamAsync();
-        await responseStream.CopyToAsync(context.Response.Body);
     }
-);
+    else
+    {
+        logger.LogWarning("Authorization header missing or not a Bearer token.");
+    }
 
-app.Run();
+    return null;
+}
+
+async Task ProxyRequestAsync(
+    string requestBody,
+    HttpContext context,
+    string endpointToQuery,
+    string routePath,
+    ILogger logger)
+{
+    var content = new StringContent(requestBody, System.Text.Encoding.UTF8, "application/json");
+
+    using var httpClient = new HttpClient();
+
+    var restrictedHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "Content-Type",
+        "Content-Length",
+        "Content-Encoding",
+        "Transfer-Encoding",
+        "Host",
+    };
+
+    foreach (var header in context.Request.Headers)
+    {
+        if (restrictedHeaders.Contains(header.Key))
+            continue;
+
+        try
+        {
+            httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                header.Key,
+                header.Value.ToArray()
+            );
+        }
+        catch
+        {
+            logger.LogError(
+                "Failed to add header {HeaderKey} with value {HeaderValue} to HttpClient.",
+                header.Key,
+                string.Join(", ", header.Value)
+            );
+        }
+    }
+
+    var targetUrl = $"{endpointToQuery}{routePath}";
+    var response = await httpClient.PostAsync(targetUrl, content);
+
+    context.Response.StatusCode = (int)response.StatusCode;
+
+    foreach (var header in response.Headers.Concat(response.Content.Headers))
+    {
+        context.Response.Headers[header.Key] = header.Value.ToArray();
+    }
+
+    context.Response.Headers.Remove("transfer-encoding");
+
+    var responseStream = await response.Content.ReadAsStreamAsync();
+    await responseStream.CopyToAsync(context.Response.Body);
+}
+
+async Task<string?> RequireAppIdAsync(HttpContext context, ILogger logger)
+{
+    var appId = GetClaim(context.Request.Headers, "appid", logger);
+
+    if (string.IsNullOrWhiteSpace(appId))
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        await context.Response.WriteAsync("Unauthorized: appid claim not found in the token.");
+        return null;
+    }
+
+    logger.LogInformation("AppId: {AppId}", appId);
+    return appId;
+}
