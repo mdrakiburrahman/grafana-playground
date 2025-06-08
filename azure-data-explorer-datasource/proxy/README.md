@@ -35,3 +35,10 @@ docker run \
     -p 5005:5005 \
     adx-proxy
 ```
+
+In the container (e.g. from Docker Desktop), run:
+
+```bash
+wget -qO- http://localhost:5005/healthz
+# Healthy
+```

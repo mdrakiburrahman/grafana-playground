@@ -9,6 +9,8 @@ if (string.IsNullOrWhiteSpace(endpointToQuery))
     return;
 }
 
+app.MapGet("/healthz", () => Results.Text("Healthy", "text/plain"));
+
 app.MapPost(
     "/v1/rest/query",
     async context =>
