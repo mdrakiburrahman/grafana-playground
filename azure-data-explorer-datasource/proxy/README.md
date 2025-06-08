@@ -2,7 +2,7 @@
 
 A REST API proxy for Azure Data Explorer.
 
-Run from PowerShell:
+Run from pwsh:
 
 ```powershell
 $GIT_ROOT = git rev-parse --show-toplevel
@@ -22,4 +22,16 @@ cd "$GIT_ROOT/azure-data-explorer-datasource/proxy"
 export KUSTO_ENDPOINT="https://rakirahman.westus2.kusto.windows.net"
 export ASPNETCORE_URLS="http://localhost:5005"
 dotnet run
+```
+
+Run from docker:
+
+```bash
+docker build -t adx-proxy .
+
+docker run \
+    -e KUSTO_ENDPOINT="https://rakirahman.westus2.kusto.windows.net" \
+    -e ASPNETCORE_URLS="http://localhost:5005" \
+    -p 5005:5005 \
+    adx-proxy
 ```
