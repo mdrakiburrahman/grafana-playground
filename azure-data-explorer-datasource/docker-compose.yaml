@@ -3,3 +3,16 @@ services:
     extends:
       file: .config/docker-compose-base.yaml
       service: grafana
+
+  azure-data-explorer-proxy:
+    container_name: azure-data-explorer-proxy
+    build:
+      context: ./proxy
+    environment:
+      KUSTO_ENDPOINT: "https://rakirahman.westus2.kusto.windows.net"
+      ASPNETCORE_URLS: "http://0.0.0.0:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
