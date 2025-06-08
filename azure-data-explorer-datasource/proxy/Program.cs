@@ -15,6 +15,36 @@ app.MapPost(
     "/{**catchall}",
     async context =>
     {
+        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+        if (authHeader != null && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            if (handler.CanReadToken(token))
+            {
+                var jwtToken = handler.ReadJwtToken(token);
+                var appIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "appid");
+
+                if (appIdClaim != null)
+                {
+                    logger.LogInformation("AppId: {AppId}", appIdClaim.Value);
+                }
+                else
+                {
+                    logger.LogWarning("appid claim not found in the token.");
+                }
+            }
+            else
+            {
+                logger.LogWarning("Unable to read JWT token.");
+            }
+        }
+        else
+        {
+            logger.LogWarning("Authorization header missing or not a Bearer token.");
+        }
+
         using var httpClient = new HttpClient();
 
         var restrictedHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
