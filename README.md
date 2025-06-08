@@ -74,3 +74,7 @@ Following [this tutorial](https://grafana.com/developers/plugin-tools/tutorials/
 * `npm run server` to start a grafana development server with docker compose.
 * Open `http://localhost:3000` in your browser to create a dashboard to begin developing your plugin.
 * `npm run shutdown` to stop a grafana development server with docker compose.
+
+Configuring the SPN creds:
+
+![Line graph](.imgs/adx-dashboard.png)

@@ -1,9 +1,9 @@
 apiVersion: 1
 
 deleteDatasources:
-  - name: Azure Data Explorer
+  - name: Azure SQL Data Explorer
     orgId: 1
-  - name: Azure Data Explorer (OBO)
+  - name: Azure SQL Data Explorer (OBO)
     orgId: 1
 
 datasources:
@@ -16,7 +16,7 @@ datasources:
       tlsAuth: false
       tlsAuthWithCACert: false
       clusterUrl: $CLUSTER_URL
-    name: Azure Data Explorer
+    name: Azure SQL Data Explorer
     secureJsonData:
       clientSecret: $CLIENT_SECRET
     type: grafana-azure-data-explorer-datasource
@@ -33,7 +33,7 @@ datasources:
       tlsAuth: false
       tlsAuthWithCACert: false
       clusterUrl: $CLUSTER_URL
-    name: Azure Data Explorer (OBO)
+    name: Azure SQL Data Explorer (OBO)
     secureJsonData:
       clientSecret: $CLIENT_SECRET
     type: grafana-azure-data-explorer-datasource
