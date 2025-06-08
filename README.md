@@ -61,6 +61,16 @@ Following [this tutorial](https://grafana.com/developers/plugin-tools/tutorials/
 
 ![Line graph](.imgs/hello-world-dashboard.png)
 
-## Azure Data Explorer
+## Azure SQL Data Explorer
 
-> Note that in order to install plugins, you need to sign into Grafana (`admin:admin`).
+> Note that in order to install plugins, you may need to sign into Grafana (`admin:admin`).
+
+### Build the official plugin
+
+* `cd azure-data-explorer-datasource`
+* `npm install` to install frontend dependencies.
+* `npm run build` to build the plugin frontend.
+* `mage -v build:linux` to build the plugin backend code. Rerun this command every time you edit your backend files.
+* `npm run server` to start a grafana development server with docker compose.
+* Open `http://localhost:3000` in your browser to create a dashboard to begin developing your plugin.
+* `npm run shutdown` to stop a grafana development server with docker compose.

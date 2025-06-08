@@ -1,0 +1,26 @@
+name: Compatibility check
+on: [push, pull_request]
+
+jobs:
+  compatibilitycheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install dependencies
+        run: yarn install
+      - name: Build plugin
+        run: yarn build
+      - name: Compatibility check
+        uses: grafana/plugin-actions/is-compatible@f567fc6454619e6c8dbc2f91692197457c10a02b
+        with:
+          module: './src/module.ts'
+          comment-pr: 'yes'
+          skip-comment-if-compatible: 'yes'
+          fail-if-incompatible: 'no'
+          targets: '@grafana/data,@grafana/ui,@grafana/runtime,@grafana/e2e-selectors'
