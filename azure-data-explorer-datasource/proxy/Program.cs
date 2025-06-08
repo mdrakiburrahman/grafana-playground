@@ -1,4 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -32,6 +34,9 @@ app.MapPost("/v1/rest/query", async context =>
 
     using var reader = new StreamReader(context.Request.Body);
     var requestBody = await reader.ReadToEndAsync();
+    var requestPayload = ParseQueryPayload(requestBody, logger);
+    logger.LogInformation("Kusto Query: {Query}", requestPayload?.CSL);
+
     await ProxyRequestAsync(requestBody, context, endpointToQuery, routePath, logger);
 });
 
@@ -145,4 +150,26 @@ async Task<string?> RequireAppIdAsync(HttpContext context, ILogger logger)
 
     logger.LogInformation("AppId: {AppId}", appId);
     return appId;
+}
+
+RequestPayload? ParseQueryPayload(string requestBody, ILogger logger)
+{
+    try
+    {
+        return JsonSerializer.Deserialize(requestBody, AppJsonContext.Default.RequestPayload);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to deserialize the request payload.");
+        return null;
+    }
+}
+
+public class RequestPayload
+{
+    [JsonPropertyName("db")]
+    public string DB { get; set; }
+
+    [JsonPropertyName("csl")]
+    public string CSL { get; set; }
 }
