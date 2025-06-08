@@ -10,6 +10,7 @@
 set -e
 set -m
 
+export DOTNET_VERSION=8.0.201
 export NODE_VERSION=22.16.0
 export NVM_VERSION=v0.40.3
 export GO_VERSION=1.22.0
@@ -56,6 +57,25 @@ fi
 /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest
 /usr/local/go/bin/go install github.com/magefile/mage@latest
 
+if ! command -v dotnet &> /dev/null || ! dotnet --list-sdks | grep -q "^${DOTNET_VERSION}"; then
+    echo "Installing .NET SDK $DOTNET_VERSION..."
+
+    wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+    chmod +x dotnet-install.sh
+
+    ./dotnet-install.sh --version "${DOTNET_VERSION}" --install-dir "$HOME/.dotnet"
+
+    if ! grep -q "\$HOME/.dotnet" ~/.bashrc; then
+        echo "export DOTNET_ROOT=\$HOME/.dotnet" >> ~/.bashrc
+        echo "export PATH=\$PATH:\$HOME/.dotnet:\$HOME/.dotnet/tools" >> ~/.bashrc
+        source ~/.bashrc
+    fi
+    rm dotnet-install.sh
+    echo ".NET SDK $DOTNET_VERSION installed successfully."
+else
+    echo ".NET SDK $DOTNET_VERSION is already installed."
+fi
+
 echo ""
 echo "┌─────────────────┐"
 echo "│ Installing Node │"
@@ -94,6 +114,7 @@ echo "│ Installing VS Code extensions │"
 echo "└───────────────────────────────┘"
 echo ""
 
+code --install-extension ms-dotnettools.csdevkit
 code --install-extension github.copilot
 code --install-extension eamodio.gitlens
 code --install-extension golang.go@0.45.0
@@ -106,6 +127,7 @@ echo "└──────────┘"
 echo ""
 
 echo "Docker: $(docker --version)"
+echo "Dotnet: $(dotnet --version)"
 echo "Go: $(/usr/local/go/bin/go version)"
 echo "Mage version: " $(/home/boor/go/bin/mage --version)
 echo "npm version: " $(npm --version)

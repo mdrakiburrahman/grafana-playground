@@ -63,6 +63,17 @@ Following [this tutorial](https://grafana.com/developers/plugin-tools/tutorials/
 
 ## Azure SQL Data Explorer
 
+### Run the proxy
+
+```bash
+GIT_ROOT=$(git rev-parse --show-toplevel)
+cd "$GIT_ROOT/azure-data-explorer-datasource-proxy"
+
+export KUSTO_ENDPOINT="https://rakirahman.westus2.kusto.windows.net"
+export ASPNETCORE_URLS="http://localhost:5005"
+dotnet run
+```
+
 > Note that in order to install plugins, you may need to sign into Grafana (`admin:admin`).
 
 ### Build the official plugin
