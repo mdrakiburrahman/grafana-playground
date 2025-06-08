@@ -67,7 +67,7 @@ Following [this tutorial](https://grafana.com/developers/plugin-tools/tutorials/
 
 ```bash
 GIT_ROOT=$(git rev-parse --show-toplevel)
-cd "$GIT_ROOT/azure-data-explorer-datasource-proxy"
+cd "$GIT_ROOT/azure-data-explorer-datasource/proxy"
 
 export KUSTO_ENDPOINT="https://rakirahman.westus2.kusto.windows.net"
 export ASPNETCORE_URLS="http://localhost:5005"
